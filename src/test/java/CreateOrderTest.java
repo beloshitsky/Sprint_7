@@ -1,20 +1,24 @@
+import base.OrderApi;
 import io.qameta.allure.junit4.DisplayName;
-import io.restassured.response.Response;
+import io.restassured.response.ValidatableResponse;
+import model.Order;
 import org.junit.After;
+import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 
 import java.util.List;
 
-import static io.restassured.RestAssured.given;
+import static org.apache.http.HttpStatus.SC_CREATED;
 import static org.hamcrest.Matchers.notNullValue;
 
 @RunWith(Parameterized.class)
-public class CreateOrderTest extends TestConfiguration {
+public class CreateOrderTest{
 
+    private OrderApi orderApi;
     private Order order;
-    private Response response;
+    private ValidatableResponse response;
 
     public CreateOrderTest(Order order) {
         this.order = order;
@@ -36,28 +40,25 @@ public class CreateOrderTest extends TestConfiguration {
         };
     }
 
-    @Test
-    @DisplayName("check create orders")
-    public void checkCreateOrder() {
-        response = given()
-                .spec(requestSpecification)
-                .body(order)
-                .when()
-                .post("/orders");
+    @Before
+    public void setUp() {
+        orderApi = new OrderApi();
+    }
 
-        response
-                .then().statusCode(201)
+    @Test
+    @DisplayName("Check create orders")
+    public void checkCreateOrder() {
+        response = orderApi.create(order)
+                .assertThat()
+                .statusCode(SC_CREATED)
                 .and()
                 .body("track", notNullValue());
     }
 
     @After
     public void deleteOrder() {
-        Integer track = response.then().extract().path("track");
+        Integer track = response.extract().path("track");
 
-        given()
-                .spec(requestSpecification)
-                .put("/orders/cancel?track={track}", track)
-                .then().statusCode(200);
+        orderApi.delete(track);
     }
 }

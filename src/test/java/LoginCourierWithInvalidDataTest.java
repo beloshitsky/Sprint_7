@@ -1,17 +1,21 @@
+import base.CourierApi;
 import io.qameta.allure.junit4.DisplayName;
+import model.Courier;
+import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 
-import static io.restassured.RestAssured.given;
+import static org.apache.http.HttpStatus.SC_BAD_REQUEST;
 import static org.hamcrest.Matchers.equalTo;
 
 @RunWith(Parameterized.class)
-public class NegativeLoginCourierTest extends TestConfiguration {
+public class LoginCourierWithInvalidDataTest {
 
+    private CourierApi courierApi;
     private Courier courier;
 
-    public NegativeLoginCourierTest(Courier courier) {
+    public LoginCourierWithInvalidDataTest(Courier courier) {
         this.courier = courier;
     }
 
@@ -23,16 +27,20 @@ public class NegativeLoginCourierTest extends TestConfiguration {
         };
     }
 
+    @Before
+    public void setUp() {
+        courierApi = new CourierApi();
+    }
+
     @Test
     @DisplayName("Check login without login or password")
     public void checkLoginCourierWithoutLoginOrPassword() {
-        given()
-                .spec(requestSpecification)
+        courierApi = new CourierApi();
+
+        courierApi.login(courier)
+                .assertThat()
+                .statusCode(SC_BAD_REQUEST)
                 .and()
-                .body(courier)
-                .post("/courier/login")
-                .then().statusCode(400)
-                .and()
-                .assertThat().body("message", equalTo("Недостаточно данных для входа"));
+                .body("message", equalTo("Недостаточно данных для входа"));
     }
 }

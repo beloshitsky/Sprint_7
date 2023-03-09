@@ -1,27 +1,34 @@
+import base.OrderApi;
 import io.qameta.allure.junit4.DisplayName;
-import io.restassured.response.Response;
+import org.junit.Before;
 import org.junit.Test;
 
-import static io.restassured.RestAssured.given;
+import static org.apache.http.HttpStatus.SC_OK;
 import static org.hamcrest.Matchers.notNullValue;
 import static org.junit.Assert.assertEquals;
 
-public class OrdersTest extends TestConfiguration {
+public class OrdersTest{
+
+    private OrderApi orderApi;
+
+    @Before
+    public void setUp() {
+        orderApi = new OrderApi();
+    }
 
     @Test
-    @DisplayName("check get orders list")
+    @DisplayName("Check get orders list")
     public void checkGetOrders() {
-        Response response = given()
-                .spec(requestSpecification)
-                .get("/orders");
+        orderApi.getOrdersList()
+                .assertThat()
+                .statusCode(SC_OK)
+                .and()
+                .body("orders", notNullValue());
 
-        response.then()
-                .assertThat().body("orders", notNullValue())
-                .and().statusCode(200);
+        int actualOrdersListSize = orderApi.getOrdersList()
+                .extract().jsonPath()
+                .getList("orders").size();
 
-        assertEquals(30, response
-                .jsonPath()
-                .getList("orders")
-                .size());
+        assertEquals(30, actualOrdersListSize);
     }
 }
